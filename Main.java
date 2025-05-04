@@ -14,6 +14,7 @@ public class Main {
         GamePanel gamePanel = new GamePanel();
         frame.add(gamePanel);
         frame.pack();
+        gamePanel.requestFocus();
         frame.setVisible(true);
     }
 }
