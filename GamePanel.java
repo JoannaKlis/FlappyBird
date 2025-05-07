@@ -17,6 +17,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     Timer gameLoop;
     Timer placePipeTimer;
+    boolean gameOver = false;
 
     int velocityX = -4;
     int velocityY = 0;
@@ -44,9 +45,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         gameLoop.start();
     }
 
-    public void placePipes() {
+    private void placePipes() {
         int pipeY = (int) ((double) -GameConstants.PIPE_HEIGHT / 4 - random.nextDouble() * ((double) GameConstants.PIPE_HEIGHT / 2));
-        int gap   = GameConstants.BOARD_HEIGHT / 4;
+        int gap = GameConstants.BOARD_HEIGHT / 4;
         int startX = GameConstants.BOARD_WIDTH;
 
         Pipe topPipe = new Pipe(topPipeImg, startX, pipeY);
@@ -61,7 +62,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         draw(g);
     }
 
-    public void draw(Graphics g) {
+    private void draw(Graphics g) {
         g.drawImage(backgroundImg, 0, 0, GameConstants.BOARD_WIDTH, GameConstants.BOARD_HEIGHT, null);
         g.drawImage(bird.img, bird.x, bird.y, bird.width, bird.height, null);
 
@@ -70,20 +71,40 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
     }
 
-    public void move() {
+    private void move() {
         velocityY += gravity;
         bird.y += velocityY;
         bird.y = Math.max(bird.y, 0);
 
         for (Pipe pipe : pipes) {
             pipe.x += velocityX;
+
+            if (collision(bird, pipe)) {
+                gameOver = true;
+            }
         }
+
+        if (bird.y > GameConstants.BOARD_HEIGHT) {
+            gameOver = true;
+        }
+    }
+
+    private boolean collision(Bird a, Pipe b) {
+        return a.x < b.x + b.width &&
+                a.x + a.width > b.x &&
+                a.y < b.y + b.height &&
+                a.y + a.height > b.y;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         move();
         repaint();
+
+        if (gameOver) {
+            placePipeTimer.stop();
+            gameLoop.stop();
+        }
     }
 
     @Override
