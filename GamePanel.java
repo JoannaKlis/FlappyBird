@@ -14,16 +14,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     Bird bird;
     ArrayList<Pipe> pipes;
-
-    Timer gameLoop;
-    Timer placePipeTimer;
-    boolean gameOver = false;
-
+    Timer gameLoop, placePipeTimer;
     int velocityX = -4;
     int velocityY = 0;
     int gravity = 1;
-
-    Random random = new Random();
+    boolean gameOver = false;
+    double score = 0;
 
     public GamePanel() {
         setPreferredSize(new Dimension(GameConstants.BOARD_WIDTH, GameConstants.BOARD_HEIGHT));
@@ -46,17 +42,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void placePipes() {
-        int pipeY = (int) ((double) -GameConstants.PIPE_HEIGHT / 4 - random.nextDouble() * ((double) GameConstants.PIPE_HEIGHT / 2));
+        Random random = new Random();
+        int pipeY = (int)(-GameConstants.PIPE_HEIGHT / 4 - random.nextDouble() * (GameConstants.PIPE_HEIGHT / 2));
         int gap = GameConstants.BOARD_HEIGHT / 4;
-        int startX = GameConstants.BOARD_WIDTH;
 
-        Pipe topPipe = new Pipe(topPipeImg, startX, pipeY);
-        pipes.add(topPipe);
-
-        Pipe bottomPipe = new Pipe(bottomPipeImg, startX, pipeY + GameConstants.PIPE_HEIGHT + gap);
-        pipes.add(bottomPipe);
+        pipes.add(new Pipe(topPipeImg, GameConstants.BOARD_WIDTH, pipeY));
+        pipes.add(new Pipe(bottomPipeImg, GameConstants.BOARD_WIDTH, pipeY + GameConstants.PIPE_HEIGHT + gap));
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         draw(g);
@@ -69,6 +63,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         for (Pipe pipe : pipes) {
             g.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height, null);
         }
+        g.setColor(Color.white);
+        g.setFont(new Font("Arial", Font.PLAIN, 32));
+        g.drawString(gameOver ? "Game Over: " + (int)score : String.valueOf((int)score), 10, 35);
     }
 
     private void move() {
@@ -78,6 +75,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         for (Pipe pipe : pipes) {
             pipe.x += velocityX;
+
+            if (!pipe.passed && bird.x > pipe.x + pipe.width) {
+                score += 0.5;
+                pipe.passed = true;
+            }
 
             if (collision(bird, pipe)) {
                 gameOver = true;
@@ -111,6 +113,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
             velocityY = -9;
+            if (gameOver) {
+                bird.y = GameConstants.BOARD_HEIGHT / 2;
+                velocityY = 0;
+                pipes.clear();
+                gameOver = false;
+                score = 0;
+                gameLoop.start();
+                placePipeTimer.start();
+            }
         }
     }
 
