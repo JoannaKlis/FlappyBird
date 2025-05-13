@@ -5,4 +5,6 @@ public class GameConstants {
     public static final int BIRD_HEIGHT = 24;
     public static final int PIPE_WIDTH = 64;
     public static final int PIPE_HEIGHT = 512;
+    public static final int PIPE_INTERVAL = 1500;
+
 }

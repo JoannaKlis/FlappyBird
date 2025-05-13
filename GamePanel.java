@@ -14,12 +14,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     Bird bird;
     ArrayList<Pipe> pipes;
-    Timer gameLoop, placePipeTimer;
+    Timer gameLoop;
     int velocityX = -4;
     int velocityY = 0;
     int gravity = 1;
     boolean gameOver = false;
     double score = 0;
+
+    private long lastPipeTime;
+    private long lastUpdateTime;
 
     public GamePanel() {
         setPreferredSize(new Dimension(GameConstants.BOARD_WIDTH, GameConstants.BOARD_HEIGHT));
@@ -34,16 +37,16 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         bird = new Bird(flappyBirdImg, GameConstants.BOARD_WIDTH/8, GameConstants.BOARD_HEIGHT/2);
         pipes = new ArrayList<>();
 
-        placePipeTimer = new Timer(1500, e -> placePipes());
-        placePipeTimer.start();
+        lastPipeTime = System.currentTimeMillis();
+        lastUpdateTime = System.currentTimeMillis();
 
-        gameLoop = new Timer(1000/60, this);
+        gameLoop = new Timer(20, this);
         gameLoop.start();
     }
 
     private void placePipes() {
         Random random = new Random();
-        int pipeY = (int)(-GameConstants.PIPE_HEIGHT / 4 - random.nextDouble() * (GameConstants.PIPE_HEIGHT / 2));
+        int pipeY = (int)((double) -GameConstants.PIPE_HEIGHT / 4 - random.nextDouble() * ((double) GameConstants.PIPE_HEIGHT / 2));
         int gap = GameConstants.BOARD_HEIGHT / 4;
 
         pipes.add(new Pipe(topPipeImg, GameConstants.BOARD_WIDTH, pipeY));
@@ -69,12 +72,21 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void move() {
-        velocityY += gravity;
-        bird.y += velocityY;
+        long currentTime = System.currentTimeMillis();
+        float deltaTime = (currentTime - lastUpdateTime) / 1000.0f;
+        lastUpdateTime = currentTime;
+
+        if (currentTime - lastPipeTime > GameConstants.PIPE_INTERVAL && !gameOver) {
+            placePipes();
+            lastPipeTime = currentTime;
+        }
+
+        velocityY += (int) (gravity * deltaTime * 40);
+        bird.y += (int) (velocityY * deltaTime * 40);
         bird.y = Math.max(bird.y, 0);
 
         for (Pipe pipe : pipes) {
-            pipe.x += velocityX;
+            pipe.x += (int) (velocityX * deltaTime * 40);
 
             if (!pipe.passed && bird.x > pipe.x + pipe.width) {
                 score += 0.5;
@@ -104,7 +116,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         repaint();
 
         if (gameOver) {
-            placePipeTimer.stop();
             gameLoop.stop();
         }
     }
@@ -119,8 +130,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 pipes.clear();
                 gameOver = false;
                 score = 0;
+                lastPipeTime = System.currentTimeMillis();
+                lastUpdateTime = System.currentTimeMillis();
                 gameLoop.start();
-                placePipeTimer.start();
             }
         }
     }
