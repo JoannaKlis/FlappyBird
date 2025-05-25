@@ -13,27 +13,48 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Bird bird;
     private final ArrayList<Pipe> pipes = new ArrayList<>();
 
-    int velocityX = -4;
-    private int velocityY = 0;
-    int gravity = 1;
+    int velocityX;
+    int velocityY = -9;
+    int gravity;
 
     Timer gameLoop;
     Timer placePipeTimer;
     private boolean gameOver = false;
     private double score = 0;
 
-    public GamePanel() {
+    private final BirdType selectedType;
+
+    public GamePanel(BirdType selectedType) {
+        this.selectedType = selectedType;
         setPreferredSize(new Dimension(GameConstants.BOARD_WIDTH, GameConstants.BOARD_HEIGHT));
         setFocusable(true);
         addKeyListener(this);
 
         backgroundImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./flappybirdbg.png"))).getImage();
-        birdImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./flappybird.png"))).getImage();
         topPipeImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./toppipe.png"))).getImage();
         bottomPipeImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./bottompipe.png"))).getImage();
-        gameOverImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./gameover.png"))).getImage(); // Ładowanie grafiki game over
+        gameOverImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./gameover.png"))).getImage();
 
-        bird = new Bird(birdImg, birdX, birdY);
+        switch (selectedType) {
+            case FAST -> {
+                birdImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./flappybirdblue.png"))).getImage();
+                gravity = 1;
+                velocityX = -8;
+            }
+            case HEAVY -> {
+                birdImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./flappybirdpink.png"))).getImage();
+                gravity = 2;
+                velocityX = -4;
+            }
+            default -> {
+                birdImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./flappybird.png"))).getImage();
+                gravity = 1;
+                velocityX = -4;
+            }
+        }
+
+
+        bird = new Bird(birdImg, birdX, birdY, selectedType);
 
         placePipeTimer = new Timer(GameConstants.PIPE_INTERVAL, _ -> placePipes());
         placePipeTimer.start();
@@ -121,16 +142,19 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-            velocityY = -9;
-
             if (gameOver) {
-                bird = new Bird(birdImg, birdX, birdY);
-                velocityY = 0;
+                bird = new Bird(birdImg, birdX, birdY, selectedType);
+                velocityY = -9;
                 pipes.clear();
                 score = 0;
                 gameOver = false;
-                gameLoop.start();
+
+                placePipeTimer.stop();
+                gameLoop.stop();
                 placePipeTimer.start();
+                gameLoop.start();
+            } else {
+                velocityY = -9;
             }
         }
     }
@@ -140,4 +164,5 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void keyReleased(KeyEvent e) {}
+
 }
