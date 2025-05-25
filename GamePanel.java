@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Objects;
 import javax.swing.*;
 
-public class GamePanel extends JPanel implements ActionListener, KeyListener {
-    Image backgroundImg, birdImg, topPipeImg, bottomPipeImg, gameOverImg;
+public class GamePanel extends JPanel implements ActionListener, KeyListener, MouseListener {
+    Image backgroundImg, birdImg, topPipeImg, bottomPipeImg, gameOverImg, menuImg, restartImg;
 
     private final int birdX = GameConstants.BOARD_WIDTH / 8;
     private final int birdY = GameConstants.BOARD_HEIGHT / 2;
@@ -23,17 +23,25 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private double score = 0;
 
     private final BirdType selectedType;
+    private final JFrame frame;
 
-    public GamePanel(BirdType selectedType) {
+    private Rectangle menuIconRect;
+    private Rectangle restartIconRect;
+
+    public GamePanel(BirdType selectedType, JFrame frame) {
         this.selectedType = selectedType;
+        this.frame = frame;
         setPreferredSize(new Dimension(GameConstants.BOARD_WIDTH, GameConstants.BOARD_HEIGHT));
         setFocusable(true);
         addKeyListener(this);
+        addMouseListener(this);
 
         backgroundImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./flappybirdbg.png"))).getImage();
         topPipeImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./toppipe.png"))).getImage();
         bottomPipeImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./bottompipe.png"))).getImage();
         gameOverImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./gameover.png"))).getImage();
+        menuImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./menu.png"))).getImage();
+        restartImg = new ImageIcon(Objects.requireNonNull(getClass().getResource("./restart.png"))).getImage();
 
         switch (selectedType) {
             case FAST -> {
@@ -52,7 +60,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 velocityX = -4;
             }
         }
-
 
         bird = new Bird(birdImg, birdX, birdY, selectedType);
 
@@ -93,9 +100,23 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         g.drawString(String.valueOf((int) score), 10, 35);
 
         if (gameOver) {
-            int x = (GameConstants.BOARD_WIDTH - gameOverImg.getWidth(null)) / 2;
-            int y = (GameConstants.BOARD_HEIGHT - gameOverImg.getHeight(null)) / 2;
-            g.drawImage(gameOverImg, x, y, null);
+            int gameOverX = (GameConstants.BOARD_WIDTH - gameOverImg.getWidth(null)) / 2;
+            int gameOverY = (GameConstants.BOARD_HEIGHT - gameOverImg.getHeight(null)) / 2;
+            g.drawImage(gameOverImg, gameOverX, gameOverY, null);
+
+            int iconWidth = gameOverImg.getWidth(null) / 2;
+            int iconHeight = gameOverImg.getHeight(null) / 2;
+
+            int iconsY = gameOverY + gameOverImg.getHeight(null) + 20;
+            int totalIconsWidth = iconWidth * 2 + 40;
+            int startX = (GameConstants.BOARD_WIDTH - totalIconsWidth) / 2;
+
+            g.drawImage(menuImg, startX, iconsY, iconWidth, iconHeight, null);
+            menuIconRect = new Rectangle(startX, iconsY, iconWidth, iconHeight);
+
+            int restartX = startX + iconWidth + 40;
+            g.drawImage(restartImg, restartX, iconsY, iconWidth, iconHeight, null);
+            restartIconRect = new Rectangle(restartX, iconsY, iconWidth, iconHeight);
         }
     }
 
@@ -141,19 +162,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-            if (gameOver) {
-                bird = new Bird(birdImg, birdX, birdY, selectedType);
-                velocityY = -9;
-                pipes.clear();
-                score = 0;
-                gameOver = false;
-
-                placePipeTimer.stop();
-                gameLoop.stop();
-                placePipeTimer.start();
-                gameLoop.start();
-            } else {
+        if (!gameOver) {
+            if (e.getKeyCode() == KeyEvent.VK_SPACE) {
                 velocityY = -9;
             }
         }
@@ -165,4 +175,29 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyReleased(KeyEvent e) {}
 
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        if (gameOver) {
+            Point p = e.getPoint();
+
+            if (menuIconRect != null && menuIconRect.contains(p)) {
+                Main.showMainMenu(frame);
+            } else if (restartIconRect != null && restartIconRect.contains(p)) {
+                bird = new Bird(birdImg, birdX, birdY, selectedType);
+                velocityY = -9;
+                pipes.clear();
+                score = 0;
+                gameOver = false;
+
+                placePipeTimer.restart();
+                gameLoop.restart();
+                requestFocus();
+            }
+        }
+    }
+
+    @Override public void mousePressed(MouseEvent e) {}
+    @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseExited(MouseEvent e) {}
 }

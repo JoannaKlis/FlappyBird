@@ -30,7 +30,7 @@ public class MainMenuPanel extends JPanel {
         JButton button = new JButton(label, new ImageIcon(scaled));
         button.setFont(new Font("Arial", Font.PLAIN, 18));
         button.setBounds(90, y, 180, 50);
-        button.addActionListener(e -> {
+        button.addActionListener(_ -> {
             button.setEnabled(false);
             listener.actionPerformed(new java.awt.event.ActionEvent(type, ActionEvent.ACTION_PERFORMED, null));
         });
