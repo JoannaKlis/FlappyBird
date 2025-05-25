@@ -95,18 +95,35 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener, Mo
             g.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height, null);
         }
 
-        g.setColor(Color.white);
-        g.setFont(new Font("Arial", Font.PLAIN, 32));
-        g.drawString(String.valueOf((int) score), 10, 35);
+        if (!gameOver) {
+            g.setColor(Color.white);
+            g.setFont(new Font("Arial", Font.PLAIN, 32));
+            g.drawString(String.valueOf((int) score), 10, 35);
+        }
 
         if (gameOver) {
+            String scoreText = String.valueOf((int) score);
+
+            Font font = new Font("Arial", Font.PLAIN, 98);
+            g.setFont(font);
+
+            FontMetrics fm = g.getFontMetrics(font);
+            int textWidth = fm.stringWidth(scoreText);
+            int textX = (GameConstants.BOARD_WIDTH - textWidth) / 2;
+            int textY = 220;
+
+            g.setColor(Color.black);
+            g.drawString(scoreText, textX + 2, textY + 2);
+
+            g.setColor(Color.white);
+            g.drawString(scoreText, textX, textY);
+
             int gameOverX = (GameConstants.BOARD_WIDTH - gameOverImg.getWidth(null)) / 2;
             int gameOverY = (GameConstants.BOARD_HEIGHT - gameOverImg.getHeight(null)) / 2;
             g.drawImage(gameOverImg, gameOverX, gameOverY, null);
 
             int iconWidth = gameOverImg.getWidth(null) / 2;
             int iconHeight = gameOverImg.getHeight(null) / 2;
-
             int iconsY = gameOverY + gameOverImg.getHeight(null) + 20;
             int totalIconsWidth = iconWidth * 2 + 40;
             int startX = (GameConstants.BOARD_WIDTH - totalIconsWidth) / 2;
